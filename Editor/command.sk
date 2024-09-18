@@ -1,7 +1,9 @@
 command /camerapath [<string>] [<string>] [<string>]:
-    permission: op
+    permission: skamera.command
     trigger:
         if arg-1 is "create":
+            if player does not have permission "skamera.command.create":
+                stop
             if arg-2 is not set:
                 send "%{prefix}% Invalid Camera Path Id"
                 stop
@@ -15,6 +17,8 @@ command /camerapath [<string>] [<string>] [<string>]:
             initCameraPath(arg-2)
             save yaml "camerapath-%arg-2%"
         if arg-1 is "select":
+            if player does not have permission "skamera.command.select":
+                stop
             if {-loadedpaths::%arg-2%} is not set:
                 send "%{prefix}% Invalid Camera Path Id"
                 stop
@@ -22,6 +26,8 @@ command /camerapath [<string>] [<string>] [<string>]:
             make player execute "/selectpoint 1"        
             send "%{prefix}% Camera Path &a%arg-2%&7 selected %nl% Run &a/camerapath cancel&7 to exit Editor Mode"
         if arg-1 is "delete":
+            if player does not have permission "skamera.command.delete":
+                stop
             if {-questtools::%player%::pathedit} is not set:
                 send "%{prefix}% Select the path you want to delete first"
                 stop
@@ -38,6 +44,8 @@ command /camerapath [<string>] [<string>] [<string>]:
             send "%{prefix}% Stopped Editor Mode"
         
         if arg-1 is "play":
+            if player does not have permission "skamera.command.play":
+                stop
             if {-loadedpaths::%arg-2%} is not set:
                 send "%{prefix}% Invalid Camera Path Id"
                 stop
@@ -46,7 +54,7 @@ command /camerapath [<string>] [<string>] [<string>]:
 
 
 on tab complete of "/camerapath":
-    if player does not have permission "op":
+    if player does not have permission "skamera.command":
         stop
     set tab completions for position 1 to "create","select","delete","cancel","play"
     tab arg-1 is "select" or "play":

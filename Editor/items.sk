@@ -1,4 +1,6 @@
 on right click with player head:
+    if player does not have permission "skamera.editor":
+        stop
     {-questtools::%player%::pathedit} is set:
         cancel event
         set {_point} to {-questtools::%player%::pathpoint}
@@ -80,6 +82,8 @@ on right click with player head:
             CameraPathEditorVisualUpdate(player)
 
 on left click with player head:
+    if player does not have permission "skamera.editor":
+        stop
     {-questtools::%player%::pathedit} is set:
         set {_point} to {-questtools::%player%::pathpoint}
         set {_path} to {-questtools::%player%::pathedit}

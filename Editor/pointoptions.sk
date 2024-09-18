@@ -1,6 +1,8 @@
 command /point <text> [<text>] [<text>] [<text>]:
     permission: op
     trigger:
+        if player does not have permission "skamera.editor.points":
+            stop
         if {-questtools::%player%::pathedit} is not set:
             send "%{prefix}% Select a path before trying to edit points"
         set {_point} to {-questtools::%player%::pathpoint}
@@ -97,7 +99,7 @@ command /selectpoint <number>:
             set {-questtools::%player%::pathpoint} to arg-1
             CameraPathEditorVisualUpdate(player)
 on tab complete of "/selectpoint":
-    if player does not have permission "op":
+    if player does not have permission "skamera.editor.points":
         stop
     if {-questtools::%player%::pathedit} is not set:
         stop

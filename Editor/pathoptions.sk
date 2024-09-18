@@ -1,10 +1,11 @@
 command /pathoption <text> [<text>]:
     permission: op
     trigger:
+        if player does not have permission "skamera.editor.pathoption":
+            stop
         if {-questtools::%player%::pathedit} is not set:
             stop
         set {_path} to {-questtools::%player%::pathedit}
-
         if arg-1 is "teleportDuration":
             if arg-2 is not set:
                 send "%{prefix}% Path Value &a%arg-1% &7is: &a%camera path option "teleportDuration" of {_path}% ticks"
@@ -39,7 +40,7 @@ command /pathoption <text> [<text>]:
                 save yaml "camerapath-%{_path}%"
 
 on tab complete of "/pathoption":
-    if player does not have permission "op":
+    if player does not have permission "skamera.editor.pathoption":
         stop
     if {-questtools::%player%::pathedit} is not set:
         stop
