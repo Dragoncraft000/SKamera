@@ -3,43 +3,43 @@ command /camerapath [<string>] [<string>] [<string>]:
     trigger:
         if arg-1 is "create":
             if arg-2 is not set:
-                send "%{prefix}% Ungültige Path Id"
+                send "%{prefix}% Invalid Camera Path Id"
                 stop
             if {-loadedpaths::%arg-2%} is set:
-                send "%{prefix}% Camera Path existiert bereits (&a/camerapaths select&7)"
+                send "%{prefix}% Camera Path already exists (&a/camerapaths select&7)"
                 stop
             load yaml "%{-camerapath::dataDirectory}%/camerapath-%arg-2%.yml"
             set {-questtools::%player%::pathedit} to arg-2
-            send "%{prefix}% Camera Path &a%arg-2%&7 erstellt und ausgewählt %nl% Nutze &a/camerapath cancel&7 um die Bearbeitung zu stoppen"
+            send "%{prefix}% Camera Path &a%arg-2%&7 has been created and selected %nl% Run &a/camerapath cancel&7 to exit Editor Mode"
             set {-loadedpaths::%arg-2%} to arg-2
             initCameraPath(arg-2)
             save yaml "camerapath-%arg-2%"
         if arg-1 is "select":
             if {-loadedpaths::%arg-2%} is not set:
-                send "%{prefix}% Ungültige Path Id"
+                send "%{prefix}% Invalid Camera Path Id"
                 stop
             set {-questtools::%player%::pathedit} to arg-2
             make player execute "/selectpoint 1"        
-            send "%{prefix}% Camera Path &a%arg-2%&7 ausgewählt %nl% Nutze &a/camerapath cancel&7 um die Bearbeitung zu stoppen"
+            send "%{prefix}% Camera Path &a%arg-2%&7 selected %nl% Run &a/camerapath cancel&7 to exit Editor Mode"
         if arg-1 is "delete":
             if {-questtools::%player%::pathedit} is not set:
-                send "%{prefix}% Wähle den zu löschenden Path zuerst aus"
+                send "%{prefix}% Select the path you want to delete first"
                 stop
 
             delete yaml "camerapath-%{-questtools::%player%::pathedit}%"
-            send "%{prefix}% Path &a%{-questtools::%player%::pathedit}%&7 gelöscht"
+            send "%{prefix}% Path &a%{-questtools::%player%::pathedit}%&7 deleted"
             delete {-loadedpaths::%{-questtools::%player%::pathedit}%}
             delete {-questtools::%player%::pathedit}
         if arg-1 is "cancel":
             if {-questtools::%player%::pathedit} is not set:
-                send "%{prefix}% Path Editing nicht an"
+                send "%{prefix}% You're not editing a camera path"
                 stop
             delete {-questtools::%player%::pathedit}
-            send "%{prefix}% Path Editing beendet"
+            send "%{prefix}% Stopped Editor Mode"
         
         if arg-1 is "play":
             if {-loadedpaths::%arg-2%} is not set:
-                send "%{prefix}% Ungültige Path Id"
+                send "%{prefix}% Invalid Camera Path Id"
                 stop
             set {_p} to arg-3 if arg-3 is set else player
             playCameraPath(arg-2,{_p},false,1)
