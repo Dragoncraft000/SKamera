@@ -1,0 +1,39 @@
+function normalizeYaw(value: number) :: number:
+    set {_value} to mod({_value},360)
+    if {_value} < 0:
+        set {_value} to 360 + {_value}
+    return {_value}
+
+
+function interpolateCatmullRom(p0: location, p1: location, p2: location, p3: location, mu: number) :: location:
+    set {_rx} to PosCatmullRom((x-pos of {_p0}), (x-pos of {_p1}),(x-pos of {_p2}), (x-pos of {_p3}), {_mu})
+    set {_ry} to PosCatmullRom((y-pos of {_p0}), (y-pos of {_p1}),(y-pos of {_p2}), (y-pos of {_p3}), {_mu})
+    set {_rz} to PosCatmullRom((z-pos of {_p0}), (z-pos of {_p1}),(z-pos of {_p2}), (z-pos of {_p3}), {_mu})
+
+    set {_rotv0} to normalized vector from yaw (yaw of {_p0}) and pitch (pitch of {_p0})
+    set {_rotv1} to normalized vector from yaw (yaw of {_p1}) and pitch (pitch of {_p1})
+    set {_rotv2} to normalized vector from yaw (yaw of {_p2}) and pitch (pitch of {_p2})
+    set {_rotv3} to normalized vector from yaw (yaw of {_p3}) and pitch (pitch of {_p3})
+    
+    set {_rotx} to PosCatmullRom((x of {_rotv0}), (x of {_rotv1}), (x of {_rotv2}), (x of {_rotv3}), {_mu})
+    set {_roty} to PosCatmullRom((y of {_rotv0}), (y of {_rotv1}), (y of {_rotv2}), (y of {_rotv3}), {_mu})
+    set {_rotz} to PosCatmullRom((z of {_rotv0}), (z of {_rotv1}), (z of {_rotv2}), (z of {_rotv3}), {_mu})
+
+    set {_rotv} to vector({_rotx},{_roty},{_rotz})
+
+    set {_loc} to location at {_rx}, {_ry}, {_rz} in (world of {_p0})
+        
+    set yaw of {_loc} to normalizeYaw(yaw of {_rotv})
+    set pitch of {_loc} to pitch of {_rotv}
+    return {_loc}
+
+# ------------------------------------------------------------------------  #
+#            Catmull Rom Interpolation Implementation by bluelhf            #
+# ------------------------------------------------------------------------- #
+function PosCatmullRom(y0: number, y1: number, y2: number, y3: number, mu: number) :: number:
+   set {_a0} to -0.5*{_y0} + 1.5*{_y1} - 1.5*{_y2} + 0.5*{_y3}
+   set {_a1} to {_y0} - 2.5*{_y1} + 2*{_y2} - 0.5*{_y3}
+   set {_a2} to -0.5*{_y0} + 0.5*{_y2}
+   set {_a3} to {_y1}
+
+   return {_a0} * {_mu} * {_mu}^2 + {_a1} * {_mu}^2 + {_a2} * {_mu} + {_a3}

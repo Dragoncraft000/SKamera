@@ -1,0 +1,115 @@
+on right click with player head:
+    {-questtools::%player%::pathedit} is set:
+        cancel event
+        set {_point} to {-questtools::%player%::pathpoint}
+        set {_path} to {-questtools::%player%::pathedit}
+        name of event-item contains "Play":
+            if player is sneaking:
+                playCameraPath({_path},player,false,{_point})
+                stop
+            playCameraPath({_path},player,false)
+        name of event-item contains "Preview":
+            if player is sneaking:
+                playCameraPath({_path},player,true,{_point})
+                stop
+            playCameraPath({_path},player,true)
+        name of event-item contains "Interpolation":
+            if (getCameraPathPointValue({_point},{_path},"interpolation")) is "catmull":
+                setCameraPathPointValue({_point},{_path},"interpolation","linear")
+            else:
+                setCameraPathPointValue({_point},{_path},"interpolation","catmull")
+            saveCameraPaths()
+            CameraPathEditorVisualUpdate(player)
+        name of event-item contains "Select Point":
+            set {_bestpoint} to -1
+            set {_newpoint} to 0
+            loop getAllCameraPathPoints({_path}):
+                set {_v} to (vector from yaw (yaw of player) and pitch (pitch of player)) dot ((vector between player and (getCameraPathPoint(loop-value,{_path}))) normalized)
+                if {_v} is more than {_bestpoint}:
+                    {_v} is more than 0.94
+                    set {_bestpoint} to {_v}
+                    set {_newpoint} to loop-value
+            if {_newpoint} is not 0:
+                set {-questtools::%player%::pathpoint} to {_newpoint}
+                CameraPathEditorVisualUpdate(player)
+                play sound "minecraft:entity.experience_orb.pickup" with volume 0.2 and pitch 1 at player for player
+            else:
+                play sound "minecraft:entity.enderman.teleport" with volume 0.1 and pitch 1.5 at player for player
+        name of event-item contains "Move Point":
+            cancel event
+            set {_oldpoint} to camera path point {_point} location from {_path}
+            set {_newpos} to eye location of player
+            if {-questtools::%player%::rotpreview} is set:
+                set {-questtools::%player%::rotpreview} to now
+                stop
+            if player is sneaking:
+                set {-camerapath::%player%::hash} to 10
+                set {-questtools::%player%::rotpreview} to now
+                CameraPathEditorVisualUpdate(player)
+                updateClientDisplayTeleport({-questtools::visualid},2)
+                #teleport player to {_oldpoint}
+                namedClientEffectDisplay({-questtools::visualid}+1,{_oldpoint} ~ vector(0,1,0),player)
+                while (difference between now and {-questtools::%player%::rotpreview}) is less than 0.2 seconds:
+                    set camera of player to entity with id {-questtools::visualid}
+                    set yaw of {_oldpoint} to yaw of player
+                    set pitch of {_oldpoint} to pitch of player
+                    set camera path point {_point} location from {_path} to {_oldpoint}
+                    teleportClientDisplay({-questtools::visualid},{_oldpoint})
+
+                    make entity with id (entity id of player) ride entity with id ({-questtools::visualid}+1) for player
+                    wait 1 tick
+                set camera of player to entity with id (entity id of player)
+                removeClientEffectDisplay({-questtools::visualid}+1,player)
+                teleport player to {_newpos}
+                delete {-camerapath::%player%::hash}
+                delete {-questtools::%player%::rotpreview}
+            else:
+                set yaw of {_newpos} to yaw of {_oldpoint}
+                set pitch of {_newpos} to pitch of {_oldpoint}
+                set camera path point {_point} location from {_path} to {_newpos}
+                CameraPathEditorVisualUpdate(player)
+        name of event-item contains "Edit Speed":
+            set {_speed} to getCameraPathPointValue({_point},{_path},"speed")
+            if player is sneaking:
+                add 0.1 to {_speed}
+                play sound "minecraft:entity.experience_orb.pickup" with volume 0.7 and pitch 1.5 at player for player
+            else:
+                add 1 to {_speed}
+                play sound "minecraft:entity.experience_orb.pickup" with volume 0.4 and pitch 1 at player for player
+            setCameraPathPointValue({_point},{_path},"speed",{_speed}) 
+            CameraPathEditorVisualUpdate(player)
+
+on left click with player head:
+    {-questtools::%player%::pathedit} is set:
+        set {_point} to {-questtools::%player%::pathpoint}
+        set {_path} to {-questtools::%player%::pathedit}
+        name of event-item contains "Edit Speed":
+
+            set {_speed} to getCameraPathPointValue({_point},{_path},"speed")
+            if player is sneaking:
+                add -0.1 to {_speed}
+                play sound "minecraft:entity.experience_orb.pickup" with volume 0.7 and pitch 1.5 at player for player
+            else:
+                add -1 to {_speed}
+                play sound "minecraft:entity.experience_orb.pickup" with volume 0.4 and pitch 1 at player for player
+            setCameraPathPointValue({_point},{_path},"speed",{_speed}) 
+            CameraPathEditorVisualUpdate(player)
+
+local function customHead(name: string,nbt: string) :: item:
+    set {_i} to a player head
+    set {_n} to nbt compound of {_i}
+    add nbt compound of "%{_nbt}%" to {_n}
+    set name of {_i} to {_name}
+    return {_i}
+
+on load:
+    set {-camerapathseditor::playhead} to customHead("&r&bPlay Path","{SkullOwner:{Id:[I;560730361,-2039592014,-1344041958,-1058039007],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2VjZDA0MWY2MjhjMDA1YTY5MGZjNmI4MjM3ZTczMTFiYjdjM2IzYWFjMTA1MzlmZWZlMzk2YTRjN2M3ODNlNyJ9fX0=""}]}}}")
+    set {-camerapathseditor::previewhead} to customHead("&r&bPreview Path","{SkullOwner:{Id:[I;-49535437,-1613021111,-2013584858,383344742],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmE4ZjZiMTMxZWY4NDdkOTE2MGU1MTZhNmY0NGJmYTkzMjU1NGQ0MGMxOGE4MTc5NmQ3NjZhNTQ4N2I5ZjcxMCJ9fX0=""}]}}}")
+
+    set {-camerapathseditor::interpol_catmull} to customHead("&7Interpolation: &bCatmull-Rom","{SkullOwner:{Id:[I;935420192,-1864478935,-2079767487,-915602528],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWJjYjQzZDljYmEyODE3ZWRkYzE1MDlkM2NmZmMzNzJmNzgwZDI3MjFmNDdhNTJiNDJmZWQ5NmE0MTJmMjUwIn19fQ==""}]}}}")
+    set {-camerapathseditor::interpol_linear} to customHead("&7Interpolation: &bLinear","{SkullOwner:{Id:[I;1734687880,456081661,-2045541072,1076179543],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTc2NDViZjhiMzU2ODNhMzJlNGRlNjIxYjcxNmVlMjRiYmIwMzJlNmQwMmE5MGUzNjk0NjVhOTZmOWYzNzkifX19""}]}}}")
+
+    set {-camerapathseditor::select_point} to customHead("&b[ Select Point ]","{SkullOwner:{Id:[I;-957004471,-1576843316,-2088255675,160335064],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWFiOGVhZDFkZmE5MjJhZDg3NWQxNzkxMjU5ZWJlZjliNTUzNTBlOTc3MTU2YTViNDZmNTA0ZjVlNDM1ZTYzMSJ9fX0=""}]}}}")
+    set {-camerapathseditor::move_point} to customHead("&b[ Move Point ]","{SkullOwner:{Id:[I;-1374341878,1114718937,-1530279877,-934795587],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGVjMWMzZjdkMDljZTZjMGNiNDhlZDMwYjQ1OTZhNWMxNGZhZTc5ZGVmOGJmZDE0YTU5ZmMxOTM1NjAwYmM3YiJ9fX0=""}]}}}")
+
+    set {-camerapathseditor::speed} to customHead("&bEdit Speed","{SkullOwner:{Id:[I;-55805703,1686719372,-1772558374,-1318130039],Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWNkYmY2MTNiYzBiODg1NTg3Mjk0ODU3YWYwY2YxMmMwMTE1MzI2NGFjMjVlMTU3NzNhOWQ4YmNkYzNmMDBhOSJ9fX0=""}]}}}")

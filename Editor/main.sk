@@ -1,0 +1,128 @@
+function initCameraPath(id: string):
+    set camera path option "teleportDuration" of {_id} to 20
+    set camera path option "speed" of {_id} to "distance"
+    set camera path option "defaultTime" of {_id} to 5
+    set camera path option "cinemaScope" of {_id} to false
+    set camera path option "introFade" of {_id} to 1
+
+on load:
+    set {-questtools::visualid} to 944022557
+
+
+
+every second:
+    loop all players:
+        if {-questtools::%loop-player%::pathedit} is not set:
+            if {-questtools::%loop-player%::editpath} is set:
+                removeClientEffectDisplay({-questtools::visualid})
+                loop 9 times:
+                    set slot ((loop-number) - 1) of loop-player-1 to {-questtools::%loop-player-1%::savedhotbar::%loop-number-2%}
+                delete {-questtools::%loop-player%::editpath}
+            else:
+                loop 9 times:
+                    set {-questtools::%loop-player-1%::savedhotbar::%loop-number-2%} to slot ((loop-number) - 1) of loop-player-1
+        else:
+            if {-camerapath::%loop-player%::hash} is set:
+                if {-questtools::%loop-player%::rotpreview} is set:
+                    continue
+                removeClientEffectDisplay({-questtools::visualid})                
+                continue
+            set {-questtools::%loop-player%::editpath} to true
+            CameraPathEditorVisualUpdate(loop-player)
+on disconnect:
+    if {-questtools::%player%::pathedit} is set:
+        loop 9 times:
+            set slot ((loop-number) - 1) of player to {-questtools::%player%::savedhotbar::%loop-number-2%}
+        delete {-questtools::%player%::editpath}
+        delete {-questtools::%player%::pathedit}
+
+
+
+
+function getAllCameraPathPoints(id: string) :: numbers:
+    loop all yaml nodes in "camerapath-%{_id}%":
+        if loop-value contains "points":
+            set {_split::*} to loop-value split at "."
+            if {_points::*} does not contain {_split::2}:
+                set {_points::%{_split::2}%} to {_split::2} parsed as number
+    return {_points::*}
+
+function CameraPathEditorVisualUpdate(p:player):
+    if {-questtools::%{_p}%::rotpreview} is set:
+        stop
+    set {_point} to {-questtools::%{_p}%::pathpoint}
+    set {_path} to {-questtools::%{_p}%::pathedit}
+    set {_pointloc} to getCameraPathPoint({_point},{_path})
+    set {_points::*} to getAllCameraPathPoints({-questtools::%{_p}%::pathedit})
+    set {_speedoption} to camera path option "speed" of {_path}
+    set {_nextpoint} to getCameraPathPoint({_point}+1,{_path})
+    if {_speedoption} is "time":
+        set {_speed} to (distance between {_pointloc} and {_nextpoint}) / (getCameraPathPointTime({_point},{_path})) 
+        if {_nextpoint} is not set:
+            set {_speed} to 0
+        set {_time} to getCameraPathPointTime({_point},{_path})
+    else:
+        set {_speed} to getCameraPathPointTime({_point},{_path})
+        set {_time} to (distance between {_pointloc} and {_nextpoint}) / {_speed}
+    send action bar "&7Editing &a%{_path}%&7 Point: &a%{_point}%/%amount of {_points::*}%&8 [&fYaw: &a%round(yaw of {_pointloc})%&f | Pitch: &a%round(pitch of {_pointloc})%&f | Speed: &a%round({_speed} * 10) / 10%m/s&f Time: &a%round({_time} * 10) / 10%s&8]" to {_p}
+    #set slot 8 of {_p} to lime wool named "&a[ Add/Remove Point ]"
+    set slot 8 of {_p} to {-camerapathseditor::move_point}
+    set slot 7 of {_p} to {-camerapathseditor::select_point}
+    set slot 6 of {_p} to air
+    set slot 5 of {_p} to {-camerapathseditor::previewhead}
+    set slot 4 of {_p} to {-camerapathseditor::playhead}
+    set slot 3 of {_p} to air
+    set slot 2 of {_p} to air
+    set slot 0 of {_p} to {-camerapathseditor::speed}
+
+    if (getCameraPathPointValue({_point},{_path},"interpolation")) is "linear":
+        set slot 1 of {_p} to {-camerapathseditor::interpol_linear}
+    else:
+        set slot 1 of {_p} to {-camerapathseditor::interpol_catmull}
+    updateLineRenderer({_p})
+
+local function updateLineRenderer(p:player):
+    if {-questtools::%{_p}%::rotpreview} is set:
+        stop
+    set {_point} to {-questtools::%{_p}%::pathpoint}
+    set {_path} to {-questtools::%{_p}%::pathedit}
+    loop getAllCameraPathPoints({_path}):
+        draw 2 of dust using dustOption(rgb(0,0,255),5) at (location 2 meters in front of (getCameraPathPoint(loop-value,{_path}))) with extra 0 for {_p} 
+        if loop-value is {_point}:
+            namedClientEffectDisplay({-questtools::visualid},getCameraPathPoint(loop-value,{_path}),{_p})
+            updateClientDisplayItem({-questtools::visualid},white stained glass,{_p})
+            send metadata packet with entity id {-questtools::visualid} glowing true to {_p}
+            #posDebugLocation(getCameraPathPoint(loop-value,{_path}), 1.1 seconds,rgb(0,255,0))
+        else:
+            posDebugLocation(getCameraPathPoint(loop-value,{_path}), 1.1 seconds)
+        if {_lastpoint} is set:
+            if (distance between ({_lastpoint}) and (getCameraPathPoint(loop-value,{_path}))) is more than 1:
+                if loop-value is {_point} + 1:
+                    drawConnection({_lastpoint},getCameraPathPoint(loop-value,{_path}),{_p},true)
+                else:
+                    drawConnection({_lastpoint},getCameraPathPoint(loop-value,{_path}),{_p})
+        set {_lastpoint} to getCameraPathPoint(loop-value,{_path})
+
+local function drawConnection(lastpoint: location,point:location,p:player,selected: boolean = false):
+    loop 4 times:
+        if {_selected} is true:
+            set {_color} to rgb(100,255,100)
+        else:
+            set {_color} to rgb(200,200,200)
+
+        # Requires skript-particle to work if you don't want to use skript-particle you can remove these and uncomment the following lines instead
+        set {_line} to line from {_lastpoint} to {_point}
+        draw the shape ({_line}) to {_p}:
+            set particle density of drawn shape to 0.5
+            set particle of drawn shape to dust particle using dustOption({_color},1.5)
+        
+        # ---- Start of without skript-particle Section
+
+        # set {_distance} to distance between {_lastpoint} and {_point}
+        # loop {_distance} / 2 times:
+        #     set {_v} to vector between {_point} and {_lastpoint}
+        #     draw 1 of dust using dustOption({_color},1.5) at ({_point} ~ ({_v} * 2 * (loop-number-2 / {_distance}))) with extra 0 for {_p}
+
+        # ---- End of Section
+        wait 5 ticks
+

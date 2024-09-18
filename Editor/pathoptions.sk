@@ -1,0 +1,50 @@
+command /pathoption <text> [<text>]:
+    permission: op
+    trigger:
+        if {-questtools::%player%::pathedit} is not set:
+            stop
+        set {_path} to {-questtools::%player%::pathedit}
+
+        if arg-1 is "teleportDuration":
+            if arg-2 is not set:
+                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "teleportDuration" of {_path}% Ticks"
+            else:
+                set camera path option "teleportDuration" of {_path} to arg-2 parsed as number
+                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "teleportDuration" of {_path}% Ticks &7gesetzt"
+                CameraPathEditorVisualUpdate(player)
+                save yaml "camerapath-%{_path}%"
+        if arg-1 is "introFade":
+            if arg-2 is not set:
+                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "introFade" of {_path}% Sekunden"
+            else:
+                set camera path option "introFade" of {_path} to arg-2 parsed as number
+                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "introFade" of {_path}% Sekunden &7gesetzt"
+                CameraPathEditorVisualUpdate(player)
+                save yaml "camerapath-%{_path}%"
+        if arg-1 is "cinemaScope":
+            if arg-2 is not set:
+                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "cinemaScope" of {_path}%"
+            else:
+                set camera path option "cinemaScope" of {_path} to arg-2 parsed as boolean
+                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "cinemaScope" of {_path}% &7gesetzt"
+                CameraPathEditorVisualUpdate(player)
+                save yaml "camerapath-%{_path}%"
+        if arg-1 is "speed":
+            if arg-2 is not set:
+                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "speed" of {_path}%"
+            else:
+                set camera path option "speed" of {_path} to arg-2
+                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "speed" of {_path}% &7gesetzt"
+                CameraPathEditorVisualUpdate(player)
+                save yaml "camerapath-%{_path}%"
+
+on tab complete of "/pathoption":
+    if player does not have permission "op":
+        stop
+    if {-questtools::%player%::pathedit} is not set:
+        stop
+    set tab completions for position 1 to "teleportDuration", "introFade", "cinemaScope", "speed"
+    if tab arg 1 is "cinemaScope":
+        set tab completions for position 2 to "true" and "false"
+    if tab arg 1 is "speed":
+        set tab completions for position 2 to "time" and "distance"

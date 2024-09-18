@@ -1,0 +1,118 @@
+function cancelCameraPath(p:player):
+    delete {-camerapath::%{_p}%::hash}
+    delete {-camerapath::%{_p}%::preview}
+
+on load: # Change these to your resource pack if you want to use the Intro Fade or the cinemascope bars
+    set {-camerapathseditor::fadestring} to "<color:#3C30FF>"
+    set {-camerapathseditor::cinemascopestring} to "<color:#3C60FF>"
+    #set {prefix} to mini message from "<gray>[</gray><gradient:#22ff22:#22ffff>SKamera</gradient><gray>]"
+
+
+function playCameraPath(pathid:string,p:player,preview: boolean = false,looppoint:number = 1,endpoint: location= location(0,-100,0)):
+    if {-loadedpaths::%{_pathid}%} is not set:
+        stop
+    toggle scoreboard of {_p} off
+    set {_gamemode} to gamemode of {_p}
+    set {_points::*} to loadPathPoints({_pathid})
+    set {_interpolation} to camera path option "teleportDuration" of {_pathid}
+    set {_start} to {_points::%{_looppoint}%} ~ (vector between {_points::%{_looppoint}+1%} and {_points::%{_looppoint}%})
+    set {_end} to (last element of {_points::*}) ~ (vector between (2nd last element of {_points::*}) and last element of {_points::*})
+    set {_id} to clientEffectDisplay({_points::%{_looppoint}%},10000)
+    set {_id2} to clientEffectDisplay({_points::%{_looppoint}%},10000)
+    set {_hash} to random number between 1 and 100000
+    set {-camerapath::%{_p}%::hash} to {_hash}
+    if ({_preview} is false):
+        if camera path option "introFade" of {_pathid} is set:
+            set {_time} to "%camera path option "introFade" of {_pathid}% seconds" parsed as timespan
+            if {_time} is not set:
+                set {_time} to 1 second
+            if (camera path option "introFade" of {_pathid}) is more than 0:
+                send title mini message from "%{-camerapathseditor::fadestring}%" to {_p} for {_time} with fadein 20 ticks and fadeout 20 ticks
+                wait 20 ticks
+        updateClientDisplayItem({_id},air)
+        updateClientDisplayScale({_id},vector(0.25,0.25,0.25))
+        set gamemode of {_p} to spectator
+        teleport {_p} to {_points::%{_looppoint}%}
+        wait 5 ticks
+        set camera of {_p} to entity with id {_id}
+    else:
+        set {-camerapath::%{_p}%::preview} to {_hash}
+        updateClientDisplayPosition({_id},vector(0,0.25,0))
+        updateClientDisplayRotation({_id},180,vector(0,1,0))
+        updateClientDisplayItem({_id},player head)
+        wait 5 ticks
+    while {_looppoint} is less than (size of {_points::*}):
+        if  {-camerapath::%{_p}%::hash} is not {_hash}:
+            set {_canceled} to true
+            exit 1 loop
+        set {_p0} to {_points::%({_looppoint} ) - 1%} if {_looppoint}  > 1, else {_start} 
+        set {_p1} to {_points::%({_looppoint} ) + 0%}
+        set {_p2} to {_points::%({_looppoint} ) + 1%}
+        set {_p3} to {_points::%({_looppoint} ) + 2%} if {_looppoint}  < (size of {_points::*} - 1), else {_end}
+
+        set yaw of {_p0} to yaw of {_p0}
+        set yaw of {_p1} to yaw of {_p1}
+        set yaw of {_p2} to yaw of {_p2}
+        set yaw of {_p3} to yaw of {_p3}
+
+        set {_speedoption} to camera path option "speed" of {_pathid}
+        set {_distance} to (distance between {_p1} and {_p2})
+        if getCameraPathPointValue({_looppoint},{_pathid},"interpolation") is "catmull":
+            updateClientDisplayTeleport({_id},{_interpolation})
+            if {_speedoption} is "time":
+                set {_step} to 1 / ((getCameraPathPointTime({_looppoint},{_pathid})) * 20)
+                if {_step} is not set:
+                    set {_step} to 1 / ((camera path option "defaultTime" of {_pathid}) * 20)
+                if {_step} is not set:
+                    set {_step} to 1 / 40
+            if {_speedoption} is "distance":
+                set {_step} to 1 / ({_distance} / (getCameraPathPointTime({_looppoint},{_pathid}) / 20))
+            set {_mu} to 0
+            while {_mu} < 1:
+                if  {-camerapath::%{_p}%::hash} is not {_hash}:
+                    set {_canceled} to true
+                    exit 2 loops
+                add {_step} to {_mu}
+                set {_point} to interpolateCatmullRom({_p0}, {_p1}, {_p2}, {_p3}, {_mu})
+                #if yaw of {_point} is less than 20:
+                 #   broadcast "%yaw of {_point}%"
+                if {_point} is not location(0,-100,0):
+                    if ({_preview} is false):
+                        teleport {_p} to {_point}
+                        if camera path option "cinemaScope" of {_pathid} is true:
+                            send action bar mini message from "%{-camerapathseditor::cinemascopestring}%" to {_p}
+                    teleportClientDisplay({_id},{_point})
+                wait 1 tick
+        else if getCameraPathPointValue({_looppoint},{_pathid},"interpolation") is "linear":
+            if ({_preview} is false):
+                teleport {_p} to {_p1}
+            if {_speedoption} is "time":
+                set {_time} to getCameraPathPointTime({_looppoint},{_pathid}) * 20
+            else if {_speedoption} is "distance":
+                set {_time} to {_distance} / (getCameraPathPointTime({_looppoint},{_pathid}) / 20)
+            updateClientDisplayTeleport({_id},round({_time}))
+            teleportClientDisplay({_id},{_p2})
+            if camera path option "cinemaScope" of {_pathid} is true:
+                loop {_time} times:
+                    send action bar mini message from "%{-camerapathseditor::cinemascopestring}%" to {_p}
+                    wait 1 tick
+            else:
+                wait "%{_time}% ticks" parsed as timespan
+        add 1 to {_looppoint}
+    if {_canceled} is not set:
+        wait 5 ticks
+        if camera path option "cinemaScope" of {_pathid} is true:
+            send title mini message from "%{-camerapathseditor::cinemascopestring}%" to {_p} for ("%{_interpolation}% ticks" parsed as timespan) with fadein 0 ticks and fadeout ("%{_interpolation}% ticks" parsed as timespan)
+        wait "%{_interpolation}% ticks" parsed as timespan
+    if ({_preview} is false):
+        set {_v} to entity id of {_p}
+        set camera of {_p} to entity with id {_v}
+        set {_p}'s gamemode to {_gamemode}
+        if  {-camerapath::%{_p}%::hash} is {_hash}:
+            if {_endpoint} is not location(0,-100,0):
+                teleport {_p} to {_endpoint}
+            else:
+                teleport {_p} to last element of {_points::*} ~ vector(0,-1.2,0)
+    removeClientEffectDisplay({_id})
+    delete {-camerapath::%{_p}%::hash}
+    delete {-camerapath::%{_p}%::preview}

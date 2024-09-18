@@ -1,0 +1,57 @@
+options:
+    dataDirectory: "/plugins/SKamera/camera_paths"
+
+local function reloadPaths():
+    set {-camerapath::dataDirectory} to {@dataDirectory}
+    delete {-loadedpaths::*}
+    loop all of the currently loaded yaml files:
+        loop-value starts with "camerapath-"
+        unload yaml loop-value
+    load all yaml from directory {@dataDirectory} using the filename as the id
+    loop all of the currently loaded yaml files:
+        loop-value starts with "camerapath-"
+        set {_path} to (substring of (loop-value) from characters (12) to (length of loop-value))
+        set {-loadedpaths::%{_path}%} to {_path}
+
+function saveCameraPaths():
+    loop {-loadedpaths::*}:
+        save yaml "camerapath-%loop-value%"
+
+function getCameraPathPoint(point: number=1,path:string) :: location:
+    return yaml value "points.%{_point}%.location" from "camerapath-%{_path}%"
+
+function setCameraPathPoint(point: number=1,path:string,loc: location):
+    set yaml value "points.%{_point}%.location" from "camerapath-%{_path}%" to {_loc}
+
+function getCameraPathPointTime(point: number=1,path:string) :: number:
+    return yaml value "points.%{_point}%.speed" from "camerapath-%{_path}%"
+
+function getCameraPathPointValue(point: number=1,path:string,value: string) :: object:
+    return yaml value "points.%{_point}%.%{_value}%" from "camerapath-%{_path}%"
+
+function setCameraPathPointValue(point: number=1,path:string,value: string,new: object):
+    set yaml value "points.%{_point}%.%{_value}%" from "camerapath-%{_path}%" to {_new}
+
+
+expression camera path option %string% of %string%:
+    get:
+        return yaml value expr-1 from "camerapath-%expr-2%"
+    set:
+        set yaml value expr-1 from "camerapath-%expr-2%" to change value
+
+expression camera path point %number%['s] location from %string%:
+    get:
+        return yaml value "points.%expr-1%.location" from "camerapath-%expr-2%"
+    set:
+        set yaml value "points.%expr-1%.location" from "camerapath-%expr-2%" to change value
+
+function loadPathPoints(id: string) :: locations:
+    loop 100 times:
+        set {_point} to camera path point loop-value location from {_id}
+        if {_point} is not set:
+            exit 1 loop
+        add {_point} to {_points::*}
+    return {_points::*}
+
+on load:
+    reloadPaths()
