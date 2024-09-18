@@ -7,34 +7,34 @@ command /pathoption <text> [<text>]:
 
         if arg-1 is "teleportDuration":
             if arg-2 is not set:
-                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "teleportDuration" of {_path}% Ticks"
+                send "%{prefix}% Path Value &a%arg-1% &7is: &a%camera path option "teleportDuration" of {_path}% ticks"
             else:
                 set camera path option "teleportDuration" of {_path} to arg-2 parsed as number
-                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "teleportDuration" of {_path}% Ticks &7gesetzt"
+                send "%{prefix}% Set Path Value &a%arg-1% &to &a%camera path option "teleportDuration" of {_path}% ticks"
                 CameraPathEditorVisualUpdate(player)
                 save yaml "camerapath-%{_path}%"
         if arg-1 is "introFade":
             if arg-2 is not set:
-                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "introFade" of {_path}% Sekunden"
+                send "%{prefix}% Path Value &a%arg-1% &7is: &a%camera path option "introFade" of {_path}% seconds"
             else:
                 set camera path option "introFade" of {_path} to arg-2 parsed as number
-                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "introFade" of {_path}% Sekunden &7gesetzt"
+                send "%{prefix}% Set Path Value &a%arg-1% &to &a%camera path option "introFade" of {_path}% seconds"
                 CameraPathEditorVisualUpdate(player)
                 save yaml "camerapath-%{_path}%"
         if arg-1 is "cinemaScope":
             if arg-2 is not set:
-                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "cinemaScope" of {_path}%"
+                send "%{prefix}% Path Value &a%arg-1% &7is: &a%camera path option "cinemaScope" of {_path}%"
             else:
                 set camera path option "cinemaScope" of {_path} to arg-2 parsed as boolean
-                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "cinemaScope" of {_path}% &7gesetzt"
+                send "%{prefix}% Set Path Value &a%arg-1% &to &a%camera path option "cinemaScope" of {_path}%"
                 CameraPathEditorVisualUpdate(player)
                 save yaml "camerapath-%{_path}%"
         if arg-1 is "speed":
             if arg-2 is not set:
-                send "%{prefix}% Path Wert &a%arg-1% &7ist: &a%camera path option "speed" of {_path}%"
+                send "%{prefix}% Path Value &a%arg-1% &7is: &a%camera path option "speed" of {_path}%"
             else:
                 set camera path option "speed" of {_path} to arg-2
-                send "%{prefix}% Path Wert &a%arg-1% &7auf &a%camera path option "speed" of {_path}% &7gesetzt"
+                send "%{prefix}% Set Path Value &a%arg-1% &to &a%camera path option "speed" of {_path}%"
                 CameraPathEditorVisualUpdate(player)
                 save yaml "camerapath-%{_path}%"
 
