@@ -2,7 +2,7 @@ command /point <text> [<text>] [<text>] [<text>]:
     permission: op
     trigger:
         if {-questtools::%player%::pathedit} is not set:
-            send "%{prefix}% Wähle zuerst einen Camera Path aus"
+            send "%{prefix}% Select a path before trying to edit points"
         set {_point} to {-questtools::%player%::pathpoint}
         set {_path} to {-questtools::%player%::pathedit}
         set {_points::*} to getAllCameraPathPoints({_path})
@@ -45,7 +45,7 @@ command /point <text> [<text>] [<text>] [<text>]:
         if arg-1 is "split":
             set {_pointsamount} to amount of {_points::*}
             if {_point} is {_pointsamount}:
-                send "%{prefix}% Nutze stattdessen &a/point add"
+                send "%{prefix}% Run &a/point add to add new points at the end"
                 stop
 
             loop ({_pointsamount} - {_point}) times:
@@ -80,7 +80,7 @@ command /point <text> [<text>] [<text>] [<text>]:
             set {_x} to arg-2 parsed as number if arg-2 is set else 0
             set {_y} to arg-3 parsed as number if arg-3 is set else 0
             set {_z} to arg-4 parsed as number if arg-4 is set else 0
-            send "%{prefix}% Punkt um &a%{_x}%,%{_y}%,%{_z}%&7 verschoben"
+            send "%{prefix}% Moved Point by &a%{_x}%,%{_y}%,%{_z}%&7"
             set camera path point {_point} location from {_path} to {_oldpoint} ~ vector({_x},{_y},{_z})
             CameraPathEditorVisualUpdate(player)
 on tab complete of "/point":
