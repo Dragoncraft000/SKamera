@@ -58,9 +58,9 @@ all changes are automatically saved
 
 ## Todo
 
-- [ ] Add Translations for all messages
+- [x] Add Translations for all messages
+- [x] Set up Permissions for all actions
 - [ ] Finish Documentation
-- [ ] Set up Permissions for all actions
 - [ ] Expose the generated spline to allow usage within other systems
 
 ## Reporting Bugs or Requesting Features
